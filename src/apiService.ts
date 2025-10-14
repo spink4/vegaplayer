@@ -1,13 +1,16 @@
 import http from './apiCommon';
+import {DEBUG, DEBUG_API_COMMS} from './appGlobals';
 
-interface ScreenHeader {
-  Authorization: string;
-}
-
-const screenHeader = (screenToken: string): ScreenHeader => {
-  return {
-    Authorization: `Bearer ${screenToken}`,
+const screenHeader = (screenToken: string): Record<string, string> => {
+  const headers = {
+    'x-access-token': screenToken,
   };
+
+  if (DEBUG && DEBUG_API_COMMS) {
+    console.log('[ApiService] Creating auth header with token:', screenToken);
+  }
+
+  return headers;
 };
 
 const getRegistrationCode = () => {

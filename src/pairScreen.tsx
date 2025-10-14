@@ -68,8 +68,10 @@ export const PairScreen: React.FC<PairScreenProps> = ({onPaired}) => {
           console.log('[PairScreen] Screen has been paired! Saving credentials...');
         }
 
+        // Clear any pending timers FIRST
         if (checkPairCodeTimer.current) {
           clearTimeout(checkPairCodeTimer.current);
+          checkPairCodeTimer.current = null;
         }
 
         // Store credentials in AsyncStorage (equivalent to localStorage)
@@ -85,6 +87,8 @@ export const PairScreen: React.FC<PairScreenProps> = ({onPaired}) => {
         if (onPaired) {
           onPaired();
         }
+
+        return; // Exit early, don't schedule any more checks
       } else {
         // Not paired yet, check again in 3 seconds
         if (DEBUG && DEBUG_PAIRING) {

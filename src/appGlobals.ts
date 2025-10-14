@@ -11,6 +11,7 @@ export const DEBUG_CALLBACKS = false;
 export const DEBUG_PLAYLIST_RUNNER = false;
 export const DEBUG_PAIRING = true;
 export const DEBUG_CACHE = true;
+export const DEBUG_PLAYLIST_DOWNLOAD = true;
 
 export const MAX_FAILED_DOWNLOAD_COUNT = 3; // give up downloading a file after this many attempts
 

@@ -48,8 +48,14 @@ class HttpClient {
 
     const fullUrl = `${this.baseURL}${url}`;
 
+    const headers = {
+      ...this.defaultHeaders,
+      ...config?.headers,
+    };
+
     if (DEBUG && DEBUG_API_COMMS) {
       console.log(`[API] ${method} ${fullUrl}`);
+      console.log('[API] Headers:', JSON.stringify(headers));
       if (data) {
         console.log('[API] Request body:', JSON.stringify(data));
       }
@@ -58,10 +64,7 @@ class HttpClient {
     try {
       const response = await fetch(fullUrl, {
         method,
-        headers: {
-          ...this.defaultHeaders,
-          ...config?.headers,
-        },
+        headers,
         body: data ? JSON.stringify(data) : undefined,
         signal: controller.signal,
       });
