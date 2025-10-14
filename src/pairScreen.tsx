@@ -73,7 +73,8 @@ export const PairScreen: React.FC<PairScreenProps> = ({onPaired}) => {
         }
 
         // Store credentials in AsyncStorage (equivalent to localStorage)
-        await AsyncStorage.setItem('screenId', response.data.screenId);
+        // AsyncStorage requires strings, so convert screenId to string
+        await AsyncStorage.setItem('screenId', String(response.data.screenId));
         await AsyncStorage.setItem('screenToken', response.data.token);
 
         if (DEBUG && DEBUG_PAIRING) {
@@ -98,6 +99,11 @@ export const PairScreen: React.FC<PairScreenProps> = ({onPaired}) => {
       if (DEBUG && DEBUG_PAIRING) {
         console.error('[PairScreen] Error checking registration:', e);
       }
+      // Continue checking even on error - retry in 3 seconds
+      checkPairCodeTimer.current = setTimeout(
+        () => checkIfScreenRegistered(code),
+        RETRY_SCREEN_PAIRING_ROUTINE,
+      );
     }
   };
 
