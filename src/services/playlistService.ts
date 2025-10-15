@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from '@amazon-devices/expo-file-system';
 import ApiService from '../apiService';
 import {Playlist} from '../models/Playlist';
 import {
@@ -187,7 +188,6 @@ export const downloadPlaylistFromServer = async (): Promise<void> => {
 
 /**
  * Function to download the files needed for a playlist
- * Currently a stub - will be implemented when we add file download support
  */
 async function downloadPlaylistFiles(): Promise<void> {
   if (DEBUG && DEBUG_FILE_DOWNLOADS) {
@@ -195,20 +195,57 @@ async function downloadPlaylistFiles(): Promise<void> {
   }
 
   try {
-    // TODO: Implement file downloading logic
-    // For now, we'll just mark the playlist as ready since we're not downloading files yet
-    if (DEBUG && DEBUG_FILE_DOWNLOADS) {
-      console.log('[PlaylistService] File downloading not yet implemented');
-      console.log('[PlaylistService] Playlist has', newPlaylist.items.length, 'items');
+    // Download files for each item in the playlist
+    for (const item of newPlaylist.items) {
+      if (item.downloadUrl && item.filename) {
+        // Use the filename from the playlist item
+        const fileName = item.filename;
+        const localUri = `${FileSystem.documentDirectory}${fileName}`;
+
+        // Check if the file already exists locally
+        const fileInfo = await FileSystem.getInfoAsync(localUri);
+        if (!fileInfo.exists) {
+          if (DEBUG && DEBUG_FILE_DOWNLOADS) {
+            console.log('[PlaylistService] Downloading file:', item.downloadUrl);
+            console.log('[PlaylistService] Saving to:', localUri);
+          }
+
+          // Download the file
+          const downloadResult = await FileSystem.downloadAsync(
+            item.downloadUrl,
+            localUri,
+          );
+
+          if (downloadResult.status !== 200) {
+            throw new Error(
+              `Failed to download file: ${item.downloadUrl} (status: ${downloadResult.status})`,
+            );
+          }
+
+          if (DEBUG && DEBUG_FILE_DOWNLOADS) {
+            console.log('[PlaylistService] Successfully downloaded:', fileName);
+          }
+        } else {
+          if (DEBUG && DEBUG_FILE_DOWNLOADS) {
+            console.log('[PlaylistService] File already exists:', fileName);
+          }
+        }
+      }
     }
 
-    // Simulate success - in future this will download actual files
-    // For each item in the playlist, we would:
-    // 1. Check if file already exists locally
-    // 2. Download if needed
-    // 3. Verify download succeeded
+    // Loop through each file to ensure they are still present locally
+    for (const item of newPlaylist.items) {
+      if (item.downloadUrl && item.filename) {
+        const fileName = item.filename;
+        const localUri = `${FileSystem.documentDirectory}${fileName}`;
+        const fileInfo = await FileSystem.getInfoAsync(localUri);
+        if (!fileInfo.exists) {
+          throw new Error(`File missing from local storage: ${localUri}`);
+        }
+      }
+    }
 
-    // Mark the playlist as ready
+    // We have downloaded the media files so we are ready to display the new playlist
     nextPlaylist = newPlaylist;
     downloadPlaylistFilesCount = 0; // Reset counter
 
