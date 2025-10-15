@@ -15,6 +15,7 @@ import {
   setOnPlaylistChanged,
 } from './services/playlistService';
 import {DEBUG, DEBUG_PLAYLIST_DOWNLOAD} from './appGlobals';
+import {PlaylistRunner} from './components/PlaylistRunner';
 
 export const App = () => {
   const [isPaired, setIsPaired] = useState(false);
@@ -93,13 +94,19 @@ export const App = () => {
     return <PairScreen onPaired={handlePairingComplete} />;
   }
 
-  // Show blank black screen when paired
-  // In the future, this will display the actual playlist content
+  // Show playlist runner when paired and playlist is loaded
+  if (currentPlaylist && currentPlaylist.hasItemsToDisplay()) {
+    return <PlaylistRunner playlist={currentPlaylist} />;
+  }
+
+  // Show blank black screen while waiting for playlist
   return (
     <View style={styles.pairedScreen}>
-      {DEBUG && currentPlaylist && (
+      {DEBUG && (
         <Text style={styles.debugText}>
-          Playlist loaded: {currentPlaylist.items.length} items
+          {currentPlaylist
+            ? `Playlist loaded: ${currentPlaylist.items.length} items (no displayable items)`
+            : 'Waiting for playlist...'}
         </Text>
       )}
     </View>
