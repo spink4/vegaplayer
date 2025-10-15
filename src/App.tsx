@@ -48,6 +48,34 @@ export const App = () => {
         console.log('[App] Screen is paired, initializing playlist service...');
       }
 
+      // Load saved playlist from storage immediately
+      const loadSavedPlaylist = async () => {
+        try {
+          const savedPlaylist = new Playlist();
+          await savedPlaylist.retrievePlaylistFromAsyncStorage();
+
+          if (savedPlaylist.items && savedPlaylist.items.length > 0) {
+            savedPlaylist.initialize();
+            if (DEBUG && DEBUG_PLAYLIST_DOWNLOAD) {
+              console.log('[App] Loaded saved playlist from storage:', {
+                itemCount: savedPlaylist.items.length,
+              });
+            }
+            setCurrentPlaylist(savedPlaylist);
+          } else {
+            if (DEBUG && DEBUG_PLAYLIST_DOWNLOAD) {
+              console.log('[App] No saved playlist found in storage');
+            }
+          }
+        } catch (error) {
+          if (DEBUG && DEBUG_PLAYLIST_DOWNLOAD) {
+            console.log('[App] Error loading saved playlist:', error);
+          }
+        }
+      };
+
+      loadSavedPlaylist();
+
       // Set up playlist change callback
       setOnPlaylistChanged((playlist: Playlist) => {
         if (DEBUG && DEBUG_PLAYLIST_DOWNLOAD) {

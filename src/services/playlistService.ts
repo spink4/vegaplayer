@@ -195,8 +195,21 @@ async function downloadPlaylistFiles(): Promise<void> {
   }
 
   try {
+    if (DEBUG && DEBUG_FILE_DOWNLOADS) {
+      console.log('[PlaylistService] FileSystem.documentDirectory:', FileSystem.documentDirectory);
+      console.log('[PlaylistService] Total items to process:', newPlaylist.items.length);
+    }
+
     // Download files for each item in the playlist
     for (const item of newPlaylist.items) {
+      if (DEBUG && DEBUG_FILE_DOWNLOADS) {
+        console.log('[PlaylistService] Processing item:', {
+          filename: item.filename,
+          fileType: item.fileType,
+          hasDownloadUrl: !!item.downloadUrl,
+        });
+      }
+
       if (item.downloadUrl && item.filename) {
         // Use the filename from the playlist item
         const fileName = item.filename;
@@ -211,10 +224,21 @@ async function downloadPlaylistFiles(): Promise<void> {
           }
 
           // Download the file
+          if (DEBUG && DEBUG_FILE_DOWNLOADS) {
+            console.log('[PlaylistService] Starting download for:', fileName);
+          }
+
           const downloadResult = await FileSystem.downloadAsync(
             item.downloadUrl,
             localUri,
           );
+
+          if (DEBUG && DEBUG_FILE_DOWNLOADS) {
+            console.log('[PlaylistService] Download result:', {
+              status: downloadResult.status,
+              uri: downloadResult.uri,
+            });
+          }
 
           if (downloadResult.status !== 200) {
             throw new Error(
@@ -234,15 +258,28 @@ async function downloadPlaylistFiles(): Promise<void> {
     }
 
     // Loop through each file to ensure they are still present locally
+    if (DEBUG && DEBUG_FILE_DOWNLOADS) {
+      console.log('[PlaylistService] Verifying all files are downloaded...');
+    }
+
     for (const item of newPlaylist.items) {
       if (item.downloadUrl && item.filename) {
         const fileName = item.filename;
         const localUri = `${FileSystem.documentDirectory}${fileName}`;
         const fileInfo = await FileSystem.getInfoAsync(localUri);
+
+        if (DEBUG && DEBUG_FILE_DOWNLOADS) {
+          console.log('[PlaylistService] Verifying file:', fileName, 'exists:', fileInfo.exists);
+        }
+
         if (!fileInfo.exists) {
           throw new Error(`File missing from local storage: ${localUri}`);
         }
       }
+    }
+
+    if (DEBUG && DEBUG_FILE_DOWNLOADS) {
+      console.log('[PlaylistService] All files verified successfully');
     }
 
     // We have downloaded the media files so we are ready to display the new playlist
@@ -260,6 +297,7 @@ async function downloadPlaylistFiles(): Promise<void> {
 
     if (DEBUG && DEBUG_FILE_DOWNLOADS) {
       console.log('[PlaylistService] Playlist ready for display');
+      console.log('[PlaylistService] currentPlaylist updated with', currentPlaylist.items.length, 'items');
     }
 
     // Check if we have a pending download request

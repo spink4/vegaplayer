@@ -9,6 +9,7 @@ import {StyleSheet, View, Text} from 'react-native';
 import {Playlist} from '../models/Playlist';
 import {PlaylistItem} from '../models/PlaylistItem';
 import {ImagePlayer} from './ImagePlayer';
+import {VideoPlayer} from './VideoPlayer';
 import {DEBUG} from '../appGlobals';
 
 interface PlaylistRunnerProps {
@@ -18,6 +19,7 @@ interface PlaylistRunnerProps {
 export const PlaylistRunner: React.FC<PlaylistRunnerProps> = ({playlist}) => {
   const [currentItem, setCurrentItem] = useState<PlaylistItem | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [videoPlayInProgress, setVideoPlayInProgress] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize playlist on mount or when playlist changes
@@ -86,7 +88,7 @@ export const PlaylistRunner: React.FC<PlaylistRunnerProps> = ({playlist}) => {
       });
     }
 
-    // Only handle images for now
+    // Handle images
     if (item.fileType === 'Image') {
       setCurrentItem(item);
 
@@ -97,13 +99,21 @@ export const PlaylistRunner: React.FC<PlaylistRunnerProps> = ({playlist}) => {
         playlist.incrementCurPos();
         displayNextItem();
       }, duration);
+    } else if (item.fileType === 'Video') {
+      // Handle videos
+      if (DEBUG) {
+        console.log('[PlaylistRunner] Playing video:', item.filename);
+      }
+      setVideoPlayInProgress(true);
+      setCurrentItem(item);
+      // Video component will call handleVideoEnded when playback completes
     } else {
       if (DEBUG) {
         console.log(
-          `[PlaylistRunner] Skipping non-image item: ${item.fileType}`,
+          `[PlaylistRunner] Skipping unsupported item: ${item.fileType}`,
         );
       }
-      // Skip non-image items for now
+      // Skip unsupported items
       playlist.incrementCurPos();
       displayNextItem();
     }
@@ -113,6 +123,28 @@ export const PlaylistRunner: React.FC<PlaylistRunnerProps> = ({playlist}) => {
     // Use item-specific fit setting if available, otherwise use playlist default
     // For now, just use playlist default
     return playlist.fitItem || 'FitXY';
+  };
+
+  const handleVideoEnded = () => {
+    if (DEBUG) {
+      console.log('[PlaylistRunner] Video ended callback');
+    }
+    if (videoPlayInProgress) {
+      setVideoPlayInProgress(false);
+      // Move to next item
+      playlist.incrementCurPos();
+      displayNextItem();
+    }
+  };
+
+  const handleVideoError = (error: any) => {
+    console.error('[PlaylistRunner] Video error callback:', error);
+    if (videoPlayInProgress) {
+      setVideoPlayInProgress(false);
+      // Skip to next item on error
+      playlist.incrementCurPos();
+      displayNextItem();
+    }
   };
 
   // Show blank screen if not initialized or no current item
@@ -136,6 +168,17 @@ export const PlaylistRunner: React.FC<PlaylistRunnerProps> = ({playlist}) => {
       <ImagePlayer
         item={currentItem}
         fitToScreen={getItemFitToScreen(currentItem)}
+      />
+    );
+  }
+
+  if (currentItem.fileType === 'Video') {
+    return (
+      <VideoPlayer
+        item={currentItem}
+        fitToScreen={getItemFitToScreen(currentItem)}
+        onVideoEnded={handleVideoEnded}
+        onVideoError={handleVideoError}
       />
     );
   }
