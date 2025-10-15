@@ -6,7 +6,7 @@
 schema-version = 1
 
 [package]
-title = "Basic UI React Native Application for project keplerproject"
+title = "AbleSign"
 version = "0.1.0"
 id = "com.amazondeveloper.keplerproject"
 
@@ -16,3 +16,35 @@ id = "com.amazondeveloper.keplerproject.main"
 runtime-module = "/com.amazon.kepler.keplerscript.runtime.loader_2@IKeplerScript_2_0"
 launch-type = "singleton"
 categories = ["com.amazon.category.main"]
+
+[wants]
+[[wants.service]]
+id = "com.amazon.mediametrics.service" # Required for metrics service
+
+[[wants.service]]
+id = "com.amazon.media.server"
+
+[[wants.service]]
+id = "com.amazon.gipc.uuid.*"
+
+[[wants.service]]
+id = "com.amazon.media.playersession.service"
+
+[[wants.privilege]]
+id = "com.amazon.devconf.privilege.accessibility" # Required for captions
+
+[[wants.service]]
+id = "com.amazon.mediabuffer.service"
+
+[[wants.service]]
+id = "com.amazon.mediatransform.service"
+
+[[wants.service]]
+id = "com.amazon.audio.stream"
+
+[[wants.service]]
+id = "com.amazon.audio.control"
+
+[offers]
+[[offers.service]]
+id = "com.amazon.gipc.uuid.*"
